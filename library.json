@@ -1,0 +1,27 @@
+{
+  "name": "IdentityShadowThing",
+  "version": "1.0.0",
+  "description": "A",
+  "keywords": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yunarta/Arduino-IdentityShadowThing.git"
+  },
+  "authors": [
+    {
+      "name": "Yunarta Kartawahyudi",
+      "email": "yunarta.kartawahyudi@gmail.com",
+      "url": "https://github.com/yunarta",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/yunarta/",
+  "dependencies": {
+    "aws-iot-core": "",
+    "Preferences": "",
+    "PubSubClient": "~2.8"
+  },
+  "frameworks": "*",
+  "platforms": "*"
+}
