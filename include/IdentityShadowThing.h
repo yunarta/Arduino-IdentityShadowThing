@@ -11,8 +11,14 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 
-#define IdentityShadowThingCallback std::function<bool(const String &event)>
+namespace {
+    extern const char *EVENT_IDENTITY;
+    extern const char *EVENT_JOBS;
+}
+
+#define IdentityEventCallback std::function<bool(const String &event)>
 #define IdentityShadowThingSignalCallback std::function<void(void)>
+#define IdentityCommandCallback std::function<bool(const String &executionId, JsonDocument &payload)>
 
 enum IdentityShadowThingConnectionState {
     CONNECTED = 1,
@@ -28,38 +34,54 @@ class IdentityShadowThing {
     WiFiClientSecure securedClient;
     PubSubClient mqttClient;
 
-    FleetProvisioningClient* provisioningClient;
-    ThingClient* thingClient;
+    FleetProvisioningClient *provisioningClient;
+    ThingClient *thingClient;
 
     Preferences preferences;
+    JsonDocument jobs;
 
     void mqttCallback(const char *topic, uint8_t *payload, unsigned int length);
 
     bool provisioningCallback(const String &topic, JsonDocument &payload);
 
+    bool thingCommandCallback(const String &executionId, JsonDocument &payload);
+
+    bool thingJobsCallback(const String &jobId, JsonDocument &payload);
+
     bool thingCallback(const String &topic, JsonDocument &payload);
 
     bool thingShadowCallback(const String &shadowName, JsonObject &payload);
 
-    IdentityShadowThingCallback callback;
+    IdentityEventCallback callback;
     IdentityShadowThingSignalCallback signalCallback;
+    IdentityCommandCallback commandCallback;
 
     int connectionState;
     unsigned long startAttemptTime;
     bool provisioned;
+
 public:
     IdentityShadowThing(const char *awsEndPoint, const char *provisioningName);
 
     void begin();
+
     void connect();
+
     void loop();
 
-    void setIdentityCallback(IdentityShadowThingCallback callback);
+    void setEventCallback(IdentityEventCallback callback);
+
     void setSignalCallback(IdentityShadowThingSignalCallback callback);
 
-    PubSubClient* getClient();
+    void setCommandCallback(IdentityCommandCallback callback);
+
+    PubSubClient *getClient();
+
     int getConnectionState();
 
+    JsonDocument getPendingJobs();
+
+    void commandReply(const String &executionId, const CommandReply &payload);
 };
 
 
