@@ -11,13 +11,13 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 
-namespace {
-    extern const char *EVENT_IDENTITY;
-    extern const char *EVENT_JOBS;
-}
+extern const char *IDENTITY_THING_EVENT_IDENTITY;
+extern const char *IDENTITY_THING_EVENT_COMMAND;
+extern const char *IDENTITY_THING_EVENT_JOBS;
 
 #define IdentityEventCallback std::function<bool(const String &event)>
 #define IdentityShadowThingSignalCallback std::function<void(void)>
+#define IdentityJobCallback std::function<bool(const String &jobId, JsonDocument &payload)>
 #define IdentityCommandCallback std::function<bool(const String &executionId, JsonDocument &payload)>
 
 enum IdentityShadowThingConnectionState {
@@ -54,6 +54,7 @@ class IdentityShadowThing {
 
     IdentityEventCallback callback;
     IdentityShadowThingSignalCallback signalCallback;
+    IdentityJobCallback jobCallback;
     IdentityCommandCallback commandCallback;
 
     int connectionState;
@@ -75,6 +76,8 @@ public:
 
     void setCommandCallback(IdentityCommandCallback callback);
 
+    void setJobCallback(IdentityJobCallback callback);
+
     PubSubClient *getClient();
 
     int getConnectionState();
@@ -82,6 +85,10 @@ public:
     JsonDocument getPendingJobs();
 
     void commandReply(const String &executionId, const CommandReply &payload);
+
+    void jobReply(const String &jobId, const JobReply &payload);
+
+    void requestJobDetail(const String &jobId);
 };
 
 

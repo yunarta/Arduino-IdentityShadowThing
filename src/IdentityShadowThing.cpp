@@ -10,18 +10,16 @@
 
 #include "../../ESP32-QualityOfLife/include/ESP32QoL.h"
 
-namespace {
-    const char *AWS_IOT_NAMESPACE = "aws-iot";
-    const char *AWS_IOT_CERTIFICATE = "/aws-iot/certificate.pem.crt";
-    const char *AWS_IOT_PRIVATE_KEY = "/aws-iot/private.pem.key";
-    const char *AWS_IOT_ROOT_CA = "/aws-iot/aws-root-ca.pem";
-    const char *SHADOW_IDENTITY_KEY = "shadowIdentity";
-    const char *IDENTITY_SHADOW = "Identity";
+const char *AWS_IOT_NAMESPACE = "aws-iot";
+const char *AWS_IOT_CERTIFICATE = "/aws-iot/certificate.pem.crt";
+const char *AWS_IOT_PRIVATE_KEY = "/aws-iot/private.pem.key";
+const char *AWS_IOT_ROOT_CA = "/aws-iot/aws-root-ca.pem";
+const char *SHADOW_IDENTITY_KEY = "shadowIdentity";
+const char *IDENTITY_SHADOW = "Identity";
 
-    const char *EVENT_IDENTITY = "Identity";
-    const char *EVENT_JOBS = "Jobs";
-    const char *EVENT_COMMAND = "Command";
-}
+const char *IDENTITY_THING_EVENT_IDENTITY = "Identity";
+const char *IDENTITY_THING_EVENT_JOBS = "Jobs";
+const char *IDENTITY_THING_EVENT_COMMAND = "Command";
 
 IdentityShadowThing::IdentityShadowThing(const char *awsEndPoint,
                                          const char *provisioningName): thingName(thingNameWithMac(ESP.getChipModel())),
@@ -144,10 +142,10 @@ void IdentityShadowThing::loop() {
         connect();
     } else {
         connectionState = CONNECTED;
+        mqttClient.loop();
         if (provisioned) {
             thingClient->loop();
         }
-        mqttClient.loop();
     }
 }
 
@@ -215,7 +213,7 @@ bool IdentityShadowThing::thingCommandCallback(const String &executionId, JsonDo
 #endif
 
     if (this->callback != nullptr) {
-        callback(EVENT_COMMAND);
+        callback(IDENTITY_THING_EVENT_COMMAND);
     }
 
     if (this->commandCallback != nullptr) {
@@ -229,9 +227,16 @@ bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &p
     Serial.printf("[DEBUG] Received callback for job: %s\n", jobId.c_str());
 #endif
 
-    this->jobs = payload;
-    if (this->callback != nullptr) {
-        callback(EVENT_JOBS);
+    String serialized;
+    serializeJson(payload, serialized);
+    deserializeJson(this->jobs, serialized);
+
+    if (this->callback != nullptr && jobId.length() == 0) {
+        callback(IDENTITY_THING_EVENT_JOBS);
+        return true;
+    } else if (this->jobCallback != nullptr) {
+        jobCallback(jobId, payload);
+        return true;
     }
 
     return false;
@@ -285,13 +290,17 @@ bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObje
                 }
 
                 if (this->callback != nullptr) {
-                    callback(EVENT_IDENTITY);
+                    callback(IDENTITY_THING_EVENT_IDENTITY);
                 }
 #ifdef LOG_INFO
                 Serial.println(F("[INFO] Shadow updated for 'Identity'"));
 #endif
             } else {
+#ifdef LOG_INFO
+                Serial.println(F("[INFO] Shadow preload validated for 'Identity'"));
+#endif
                 thingClient->preloadedShadowValidated(shadowName);
+                thingClient->listPendingJobs();
             }
         }
         return true;
@@ -306,6 +315,10 @@ void IdentityShadowThing::setEventCallback(IdentityEventCallback callback) {
 
 void IdentityShadowThing::setSignalCallback(IdentityShadowThingSignalCallback callback) {
     this->signalCallback = callback;
+}
+
+void IdentityShadowThing::setJobCallback(IdentityJobCallback callback) {
+    this->jobCallback = callback;
 }
 
 void IdentityShadowThing::setCommandCallback(IdentityCommandCallback callback) {
@@ -324,18 +337,14 @@ JsonDocument IdentityShadowThing::getPendingJobs() {
     return this->jobs;
 }
 
+void IdentityShadowThing::requestJobDetail(const String &jobId) {
+    return thingClient->requestJobDetail(jobId);;
+}
+
 void IdentityShadowThing::commandReply(const String &executionId, const CommandReply &payload) {
-    // {
-    //     'status': 'SUCCEEDED',
-    //     'statusReason': {
-    //         'reasonCode': '200',
-    //         'reasonDescription': 'Execution_in_progress'
-    //     },
-    //     'result': {
-    //         'status': {
-    //             's': 'OK'
-    //         }
-    //     },
-    // }
     thingClient->commandReply(executionId, payload);
+}
+
+void IdentityShadowThing::jobReply(const String &jobId, const JobReply &payload) {
+    thingClient->jobReply(jobId, payload);
 }
