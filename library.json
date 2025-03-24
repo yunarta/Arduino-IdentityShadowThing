@@ -17,12 +17,22 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/yunarta/",
-  "dependencies": {
-    "aws-iot-core": "",
-    "Preferences": "",
-    "PubSubClient": "~2.8",
-    "https://github.com/yunarta/ESP32-QualityOfLife.git": ""
-  },
+  "dependencies": [
+    {
+      "name": "aws-iot-core"
+    },
+    {
+      "name": "Preferences"
+    },
+    {
+      "name": "PubSubClient",
+      "version": "~2.8"
+    },
+    {
+      "name": "ESP32-QualityOfLife",
+      "git": "https://github.com/yunarta/ESP32-QualityOfLife.git"
+    }
+  ],
   "frameworks": "*",
   "platforms": "*"
 }
