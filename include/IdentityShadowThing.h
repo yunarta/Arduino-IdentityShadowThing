@@ -46,6 +46,8 @@ class IdentityShadowThing {
 
     bool thingCommandCallback(const String &executionId, JsonDocument &payload);
 
+    void updateFirmware(const String &jobId, JsonDocument &payload);
+
     bool thingJobsCallback(const String &jobId, JsonDocument &payload);
 
     bool thingCallback(const String &topic, JsonDocument &payload);

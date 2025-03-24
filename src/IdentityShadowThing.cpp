@@ -70,7 +70,7 @@ void IdentityShadowThing::begin() {
         JsonDocument doc;
         deserializeJson(doc, payload);
         auto object = doc.as<JsonObject>();
-
+\
         thingClient->preloadShadow(IDENTITY_SHADOW, object);
     }
 
@@ -222,6 +222,53 @@ bool IdentityShadowThing::thingCommandCallback(const String &executionId, JsonDo
     return false;
 }
 
+void IdentityShadowThing::updateFirmware(const String &jobId, JsonDocument &payload) {
+    JsonObject execution = payload["execution"];
+    JsonObject document = execution["jobDocument"].as<JsonObject>();
+
+    Preferences otaPreferences;
+    otaPreferences.begin("OTAUpdate", false);
+
+    String firmwareUrl = document["job"]["params"]["url"];
+    String firmwareVersion = document["job"]["params"]["version"];
+
+    String installedVersion = otaPreferences.getString("appVersion", "");
+    if (installedVersion.equals(firmwareVersion)) {
+        long expectedVersion = otaPreferences.getLong("expectedVersion", -1);
+        if (expectedVersion != -1) {
+            String expect = otaPreferences.getString("expect", "{}");
+
+            JsonDocument expectJsonDoc;
+            deserializeJson(expectJsonDoc, expect);
+
+            JobReply reply{
+                .status = "SUCCEEDED",
+                .expectedVersion = expectedVersion,
+                .statusDetails = expectJsonDoc,
+            };
+
+            Serial.printf("Replying to job ID: %s with status: %s\n", jobId.c_str(), reply.status.c_str());
+            jobReply(jobId, reply);
+
+            otaPreferences.remove("expect");
+        }
+    } else {
+        JsonObject expect = document["expect"];
+
+        String expectJson;
+        serializeJson(expect, expectJson);
+
+        otaPreferences.putString("executionId", jobId);
+        otaPreferences.putLong("expectedVersion", execution["versionNumber"].as<long>());
+        otaPreferences.putString("expect", expectJson);
+        otaPreferences.end();
+
+        OTAUpdate.begin(firmwareVersion, firmwareUrl);
+    }
+
+    otaPreferences.end();
+}
+
 bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &payload) {
 #ifdef LOG_DEBUG
     Serial.printf("[DEBUG] Received callback for job: %s\n", jobId.c_str());
@@ -231,13 +278,30 @@ bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &p
     serializeJson(payload, serialized);
     deserializeJson(this->jobs, serialized);
 
-    if (this->callback != nullptr && jobId.length() == 0) {
-        callback(IDENTITY_THING_EVENT_JOBS);
-        return true;
-    } else if (this->jobCallback != nullptr) {
-        jobCallback(jobId, payload);
-        return true;
+    if (jobId.length() == 0) {
+        if (this->callback != nullptr) {
+            callback(IDENTITY_THING_EVENT_JOBS);
+            return true;
+        }
+    } else {
+        auto execution = payload["execution"].as<JsonObject>();
+        if (!execution.isNull()) {
+            auto document = execution["jobDocument"].as<JsonObject>();
+            if (!document.isNull()) {
+                String jobType = document["type"];
+                if (jobType.equals("UpdateFirmware")) {
+                    updateFirmware(jobId, payload);
+                    return true;
+                }
+            }
+        }
+
+        if (this->jobCallback != nullptr) {
+            jobCallback(jobId, payload);
+            return true;
+        }
     }
+
 
     return false;
 }

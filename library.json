@@ -20,7 +20,8 @@
   "dependencies": {
     "aws-iot-core": "",
     "Preferences": "",
-    "PubSubClient": "~2.8"
+    "PubSubClient": "~2.8",
+    "https://github.com/yunarta/ESP32-QualityOfLife.git": ""
   },
   "frameworks": "*",
   "platforms": "*"
