@@ -40,6 +40,8 @@ class IdentityShadowThing {
     Preferences preferences;
     JsonDocument jobs;
 
+    JsonDocument identity;
+
     void mqttCallback(const char *topic, uint8_t *payload, unsigned int length);
 
     bool provisioningCallback(const String &topic, JsonDocument &payload);
@@ -52,7 +54,7 @@ class IdentityShadowThing {
 
     bool thingCallback(const String &topic, JsonDocument &payload);
 
-    bool thingShadowCallback(const String &shadowName, JsonObject &payload);
+    bool thingShadowCallback(const String &shadowName, JsonObject &payload, bool shouldMutate);
 
     IdentityEventCallback callback;
     IdentityShadowThingSignalCallback signalCallback;
@@ -85,6 +87,10 @@ public:
     int getConnectionState();
 
     JsonDocument getPendingJobs();
+
+    JsonObject getIdentity();
+
+    void mergeIdentity(JsonDocument identity);
 
     void commandReply(const String &executionId, const CommandReply &payload);
 

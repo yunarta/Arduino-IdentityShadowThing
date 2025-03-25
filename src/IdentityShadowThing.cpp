@@ -61,17 +61,16 @@ void IdentityShadowThing::begin() {
         thingClient->setJobsCallback([this](const String &jobId, JsonDocument &payload) -> bool {
             return thingJobsCallback(jobId, payload);
         });
-        thingClient->setShadowCallback([this](const String &shadowName, JsonObject &payload) -> bool {
-            return thingShadowCallback(shadowName, payload);
+        thingClient->setShadowCallback([this](const String &shadowName, JsonObject &payload, bool shouldMutate) -> bool {
+            return thingShadowCallback(shadowName, payload, shouldMutate);
         });
 
         String payload = preferences.getString(SHADOW_IDENTITY_KEY, "{}");
 
-        JsonDocument doc;
-        deserializeJson(doc, payload);
-        auto object = doc.as<JsonObject>();
-\
-        thingClient->preloadShadow(IDENTITY_SHADOW, object);
+        // JsonDocument doc;
+        // deserializeJson(doc, payload);
+        // auto object = doc.as<JsonObject>();
+        // thingClient->preloadShadow(IDENTITY_SHADOW, object);
     }
 
     LittleFS.open(AWS_IOT_CERTIFICATE, "r");
@@ -322,59 +321,42 @@ bool IdentityShadowThing::thingCallback(const String &shadowName, JsonDocument &
     return false;
 }
 
-bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObject &payload) {
+bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObject &payload, bool shouldMutate) {
     if (shadowName.equals(IDENTITY_SHADOW)) {
         JsonObject shadow = thingClient->getShadow(IDENTITY_SHADOW);
-        long currentVersion = shadow["version"].as<long>();
-        long desiredVersion = payload["version"].as<long>();
 
-#ifdef LOG_DEBUG
-        Serial.printf("[DEBUG] Shadow update received for 'Identity' - Current Version: %ld, Desired Version: %ld\n",
-                      currentVersion, desiredVersion);
-#endif
+        Serial.printf("[DEBUG] Received callback for shadow: %s\n", shadowName.c_str());
+        Serial.printf("[DEBUG] Should mutate shadow: %s\n", shouldMutate ? "true" : "false");
 
-        if (desiredVersion != 0) {
-            if (thingClient->isValidated(IDENTITY_SHADOW)) {
-                thingClient->listPendingJobs();
+        if (shouldMutate) {
+            Preferences otaPreferences;
+            otaPreferences.begin("OTAUpdate", false);
+            String installedVersion = otaPreferences.getString("appVersion", "");
+            otaPreferences.end();
+
+            payload["appVersion"] = installedVersion;
+            thingClient->updateShadow(IDENTITY_SHADOW, payload);
+
+            String serialized;
+            serializeJson(shadow, serialized);
+            preferences.putString(SHADOW_IDENTITY_KEY, serialized);
+
+            if (this->callback != nullptr) {
+                callback(IDENTITY_THING_EVENT_IDENTITY);
             }
+#ifdef LOG_INFO
+            Serial.println(F("[INFO] Shadow updated for 'Identity'"));
+#endif
+        } else {
+#ifdef LOG_INFO
+            Serial.println(F("[INFO] Shadow preload validated for 'Identity'"));
+#endif
+            thingClient->preloadedShadowValidated(shadowName);
+            thingClient->listPendingJobs();
+        }
 
-            if (currentVersion != desiredVersion) {
-                thingClient->updateShadow(IDENTITY_SHADOW, payload);
-
-                String serialized;
-                serializeJson(shadow, serialized);
-                preferences.putString(SHADOW_IDENTITY_KEY, serialized);
-
-                if (!payload["firmware"].isNull()) {
-                    auto firmware = payload["firmware"].as<String>();
-                    if (firmware != "") {
-#ifdef LOG_INFO
-                        Serial.printf("[INFO] Starting firmware update from URL: %s\n", firmware.c_str());
-#endif
-                        // performOTAUpdate(firmware);
-#ifdef LOG_INFO
-                        Serial.println(F("[INFO] Firmware update process completed"));
-#endif
-                    }
-                } else {
-#ifdef LOG_INFO
-                    Serial.println(F("[INFO] No firmware update requested"));
-#endif
-                }
-
-                if (this->callback != nullptr) {
-                    callback(IDENTITY_THING_EVENT_IDENTITY);
-                }
-#ifdef LOG_INFO
-                Serial.println(F("[INFO] Shadow updated for 'Identity'"));
-#endif
-            } else {
-#ifdef LOG_INFO
-                Serial.println(F("[INFO] Shadow preload validated for 'Identity'"));
-#endif
-                thingClient->preloadedShadowValidated(shadowName);
-                thingClient->listPendingJobs();
-            }
+        if (thingClient->isValidated(IDENTITY_SHADOW)) {
+            thingClient->listPendingJobs();
         }
         return true;
     }
@@ -408,6 +390,15 @@ int IdentityShadowThing::getConnectionState() {
 
 JsonDocument IdentityShadowThing::getPendingJobs() {
     return this->jobs;
+}
+
+JsonObject IdentityShadowThing::getIdentity() {
+    return this->thingClient->getShadow(IDENTITY_SHADOW);
+}
+
+void IdentityShadowThing::mergeIdentity(JsonDocument identity) {
+    this->identity = identity;
+    thingClient->requestShadow(IDENTITY_SHADOW);
 }
 
 void IdentityShadowThing::requestJobDetail(const String &jobId) {
