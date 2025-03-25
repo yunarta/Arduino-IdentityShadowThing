@@ -279,6 +279,15 @@ bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &p
     deserializeJson(this->jobs, serialized);
 
     if (jobId.length() == 0) {
+        JsonDocument jobs = getPendingJobs();
+        if (jobs.size() > 0) {
+            Serial.println("Pending jobs found.");
+            for (const JsonObject &job: jobs["queuedJobs"].as<JsonArray>()) {
+                requestJobDetail(job["jobId"]);
+            }
+            return true;
+        }
+   
         if (this->callback != nullptr) {
             callback(IDENTITY_THING_EVENT_JOBS);
             return true;

@@ -5,7 +5,7 @@
 #include "IdentityShadowThingTask.h"
 
 
-static void IdentityShadowThingTask::taskEntryPoint(void *p) {
+void IdentityShadowThingTask::taskEntryPoint(void *p) {
     auto *task = static_cast<IdentityShadowThingTask *>(p);
     task->task();
 }
