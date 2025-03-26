@@ -131,7 +131,7 @@ void IdentityShadowThing::connect() {
 void IdentityShadowThing::loop() {
     if (!mqttClient.connected()) {
         identified = false;
-        if (connectionState == CONNECTED) {
+        if (connectionState >= CONNECTED) {
             connectionState = CONNECTING;
             startAttemptTime = millis();
         }
@@ -141,7 +141,10 @@ void IdentityShadowThing::loop() {
 #endif
         connect();
     } else {
-        connectionState = CONNECTED;
+        if (connectionState == CONNECTING) {
+            connectionState = CONNECTED;
+        }
+
         mqttClient.loop();
         if (provisioned) {
             thingClient->loop();
