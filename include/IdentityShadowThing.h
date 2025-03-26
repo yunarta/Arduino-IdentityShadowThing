@@ -91,6 +91,8 @@ public:
 
     JsonObject getIdentity();
 
+    String getThingName();
+
     void mergeIdentity(JsonDocument identity);
 
     void commandReply(const String &executionId, const CommandReply &payload);

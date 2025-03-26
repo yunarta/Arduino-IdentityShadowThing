@@ -404,6 +404,10 @@ JsonObject IdentityShadowThing::getIdentity() {
     return this->thingClient->getShadow(IDENTITY_SHADOW);
 }
 
+String IdentityShadowThing::getThingName() {
+    return this->thingName;
+}
+
 void IdentityShadowThing::mergeIdentity(JsonDocument identity) {
     this->identity = identity;
     if (identified) {
