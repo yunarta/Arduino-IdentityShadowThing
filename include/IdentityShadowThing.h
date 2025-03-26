@@ -21,9 +21,10 @@ extern const char *IDENTITY_THING_EVENT_JOBS;
 #define IdentityCommandCallback std::function<bool(const String &executionId, JsonDocument &payload)>
 
 enum IdentityShadowThingConnectionState {
-    CONNECTED = 1,
-    CONNECTING = 2,
-    TIMEOUT = 3
+    CONNECTING = 1,
+    CONNECTED = 2,
+    IDENTIFIED = 3,
+    TIMEOUT = -1
 };
 
 class IdentityShadowThing {

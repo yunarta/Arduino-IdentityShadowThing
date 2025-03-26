@@ -21,6 +21,7 @@ void IdentityShadowThingTask::task() {
         shadowThing->loop();
         switch (shadowThing->getConnectionState()) {
             case CONNECTED:
+            case IDENTIFIED:
                 // ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
                     vTaskDelay(pdMS_TO_TICKS(1000));
             break;

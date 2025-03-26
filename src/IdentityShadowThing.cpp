@@ -325,6 +325,8 @@ bool IdentityShadowThing::thingCallback(const String &shadowName, JsonDocument &
 bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObject &payload, bool shouldMutate) {
     if (shadowName.equals(IDENTITY_SHADOW)) {
         identified = true;
+        connectionState = IDENTIFIED;
+
         JsonObject shadow = thingClient->getShadow(IDENTITY_SHADOW);
 
         Serial.printf("[DEBUG] Received callback for shadow: %s\n", shadowName.c_str());
