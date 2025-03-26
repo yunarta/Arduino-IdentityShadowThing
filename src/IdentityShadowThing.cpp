@@ -130,6 +130,7 @@ void IdentityShadowThing::connect() {
 
 void IdentityShadowThing::loop() {
     if (!mqttClient.connected()) {
+        identified = false;
         if (connectionState == CONNECTED) {
             connectionState = CONNECTING;
             startAttemptTime = millis();
@@ -323,6 +324,7 @@ bool IdentityShadowThing::thingCallback(const String &shadowName, JsonDocument &
 
 bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObject &payload, bool shouldMutate) {
     if (shadowName.equals(IDENTITY_SHADOW)) {
+        identified = true;
         JsonObject shadow = thingClient->getShadow(IDENTITY_SHADOW);
 
         Serial.printf("[DEBUG] Received callback for shadow: %s\n", shadowName.c_str());
@@ -335,6 +337,12 @@ bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObje
             otaPreferences.end();
 
             payload["appVersion"] = installedVersion;
+
+            // merge this->identity into payload
+            for (JsonPair kv: this->identity.as<JsonObject>()) {
+                payload[kv.key()] = kv.value();
+            }
+
             thingClient->updateShadow(IDENTITY_SHADOW, payload);
 
             String serialized;
@@ -398,7 +406,9 @@ JsonObject IdentityShadowThing::getIdentity() {
 
 void IdentityShadowThing::mergeIdentity(JsonDocument identity) {
     this->identity = identity;
-    thingClient->requestShadow(IDENTITY_SHADOW);
+    if (identified) {
+        thingClient->requestShadow(IDENTITY_SHADOW);
+    }
 }
 
 void IdentityShadowThing::requestJobDetail(const String &jobId) {

@@ -64,6 +64,7 @@ class IdentityShadowThing {
     int connectionState;
     unsigned long startAttemptTime;
     bool provisioned;
+    bool identified;
 
 public:
     IdentityShadowThing(const char *awsEndPoint, const char *provisioningName);
