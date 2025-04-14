@@ -61,7 +61,7 @@ class IdentityShadowThing {
 
     bool thingMessageCallback(const String &topic, JsonDocument &payload);
 
-    IdentityEventCallback callback;
+    IdentityEventCallback eventCallback;
     IdentityShadowThingSignalCallback signalCallback;
     IdentityJobCallback jobCallback;
     IdentityCommandCallback commandCallback;

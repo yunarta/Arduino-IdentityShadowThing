@@ -27,7 +27,7 @@ IdentityShadowThing::IdentityShadowThing(const char *awsEndPoint,
                                                                         provisioningName(provisioningName),
                                                                         awsEndPoint(awsEndPoint),
                                                                         mqttClient(securedClient),
-                                                                        callback(
+                                                                        eventCallback(
                                                                             nullptr
                                                                         ) {
     provisioned = false;
@@ -115,6 +115,9 @@ void IdentityShadowThing::connect() {
         } else {
             thingClient->begin();
             thingClient->registerShadow(IDENTITY_SHADOW);
+            if (this->eventCallback != nullptr) {
+                eventCallback(IDENTITY_THING_EVENT_PROVISIONED);
+            }
 #ifdef LOG_INFO
             Serial.println(F("[INFO] Shadow client started and 'Identity' shadow registered"));
 #endif
@@ -152,9 +155,6 @@ void IdentityShadowThing::loop() {
         mqttClient.loop();
         if (provisioned) {
             thingClient->loop();
-            if (this->callback != nullptr) {
-                callback(IDENTITY_THING_EVENT_PROVISIONED);
-            }
         }
     }
 }
@@ -222,8 +222,8 @@ bool IdentityShadowThing::thingCommandCallback(const String &executionId, JsonDo
     Serial.printf("[DEBUG] Received callback for executionId: %s\n", executionId.c_str());
 #endif
 
-    if (this->callback != nullptr) {
-        callback(IDENTITY_THING_EVENT_COMMAND);
+    if (this->eventCallback != nullptr) {
+        eventCallback(IDENTITY_THING_EVENT_COMMAND);
     }
 
     if (this->commandCallback != nullptr) {
@@ -298,8 +298,8 @@ bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &p
             return true;
         }
 
-        if (this->callback != nullptr) {
-            callback(IDENTITY_THING_EVENT_JOBS);
+        if (this->eventCallback != nullptr) {
+            eventCallback(IDENTITY_THING_EVENT_JOBS);
             return true;
         }
     } else {
@@ -361,8 +361,8 @@ bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObje
             serializeJson(shadow, serialized);
             preferences.putString(SHADOW_IDENTITY_KEY, serialized);
 
-            if (this->callback != nullptr) {
-                callback(IDENTITY_THING_EVENT_IDENTITY);
+            if (this->eventCallback != nullptr) {
+                eventCallback(IDENTITY_THING_EVENT_IDENTITY);
             }
 #ifdef LOG_INFO
             Serial.println(F("[INFO] Shadow updated for 'Identity'"));
@@ -393,7 +393,7 @@ bool IdentityShadowThing::thingMessageCallback(const String &topic, JsonDocument
 }
 
 void IdentityShadowThing::setEventCallback(IdentityEventCallback callback) {
-    this->callback = callback;
+    this->eventCallback = callback;
 }
 
 void IdentityShadowThing::setSignalCallback(IdentityShadowThingSignalCallback callback) {
