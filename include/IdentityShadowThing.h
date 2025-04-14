@@ -14,6 +14,7 @@
 extern const char *IDENTITY_THING_EVENT_IDENTITY;
 extern const char *IDENTITY_THING_EVENT_COMMAND;
 extern const char *IDENTITY_THING_EVENT_JOBS;
+extern const char *IDENTITY_THING_PROVISIONED_COMMAND;
 
 #define IdentityEventCallback std::function<bool(const String &event)>
 #define IdentityShadowThingSignalCallback std::function<void(void)>
