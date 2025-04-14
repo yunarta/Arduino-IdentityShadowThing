@@ -406,6 +406,17 @@ void IdentityShadowThing::setMessageCallback(IdentityMessageCallback callback) {
     this->messageCallback = callback;
 }
 
+void IdentityShadowThing::subscribe(const String &subTopic) {
+    this->mqttClient.subscribe(this->createTopic(subTopic).c_str(), 1);
+}
+
+String IdentityShadowThing::createTopic(const String &subTopic) {
+    String topic = StringPrintF("dev/%s/%s",
+                                      this->thingName.c_str(),
+                                      subTopic.c_str());
+    return topic;
+}
+
 void IdentityShadowThing::publish(const String &topic, JsonDocument &payload) {
     String stringPayload;
     serializeJson(payload, stringPayload);

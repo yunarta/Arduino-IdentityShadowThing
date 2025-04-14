@@ -90,7 +90,11 @@ public:
 
     void setMessageCallback(IdentityMessageCallback callback);
 
-    void publish(const String &topic, JsonDocument& payload);
+    String createTopic(const String &subTopic);
+
+    void subscribe(const String &subTopic);
+
+    void publish(const String &topic, JsonDocument &payload);
 
     PubSubClient *getClient();
 
