@@ -20,7 +20,6 @@ const char *IDENTITY_SHADOW = "Identity";
 const char *IDENTITY_THING_EVENT_IDENTITY = "Identity";
 const char *IDENTITY_THING_EVENT_JOBS = "Jobs";
 const char *IDENTITY_THING_EVENT_COMMAND = "Command";
-const char *IDENTITY_THING_PROVISIONED_COMMAND = "Provisioned";
 
 IdentityShadowThing::IdentityShadowThing(const char *awsEndPoint,
                                          const char *provisioningName): thingName(thingNameWithMac(ESP.getChipModel())),
@@ -152,9 +151,6 @@ void IdentityShadowThing::loop() {
         mqttClient.loop();
         if (provisioned) {
             thingClient->loop();
-            if (this->callback != nullptr) {
-                callback(IDENTITY_THING_PROVISIONED_COMMAND);
-            }
         }
     }
 }
@@ -297,7 +293,7 @@ bool IdentityShadowThing::thingJobsCallback(const String &jobId, JsonDocument &p
             }
             return true;
         }
-   
+
         if (this->callback != nullptr) {
             callback(IDENTITY_THING_EVENT_JOBS);
             return true;
@@ -386,8 +382,10 @@ bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObje
 
 bool IdentityShadowThing::thingMessageCallback(const String &topic, JsonDocument &payload) {
     if (this->messageCallback != nullptr) {
-        this->messageCallback(topic, payload);
+        return this->messageCallback(topic, payload);
     }
+
+    return false;
 }
 
 void IdentityShadowThing::setEventCallback(IdentityEventCallback callback) {

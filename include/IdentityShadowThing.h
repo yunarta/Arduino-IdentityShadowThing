@@ -18,7 +18,7 @@ extern const char *IDENTITY_THING_PROVISIONED_COMMAND;
 
 #define IdentityEventCallback std::function<bool(const String &event)>
 #define IdentityShadowThingSignalCallback std::function<void(void)>
-#define IdentityMessageCallback std::function<void(const String &topic, JsonDocument &payload)>
+#define IdentityMessageCallback std::function<bool(const String &topic, JsonDocument &payload)>
 #define IdentityJobCallback std::function<bool(const String &jobId, JsonDocument &payload)>
 #define IdentityCommandCallback std::function<bool(const String &executionId, JsonDocument &payload)>
 
