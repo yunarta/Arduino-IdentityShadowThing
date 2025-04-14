@@ -17,6 +17,7 @@ extern const char *IDENTITY_THING_EVENT_JOBS;
 
 #define IdentityEventCallback std::function<bool(const String &event)>
 #define IdentityShadowThingSignalCallback std::function<void(void)>
+#define IdentityMessageCallback std::function<void(const String &topic, JsonDocument &payload)>
 #define IdentityJobCallback std::function<bool(const String &jobId, JsonDocument &payload)>
 #define IdentityCommandCallback std::function<bool(const String &executionId, JsonDocument &payload)>
 
@@ -57,10 +58,13 @@ class IdentityShadowThing {
 
     bool thingShadowCallback(const String &shadowName, JsonObject &payload, bool shouldMutate);
 
+    bool thingMessageCallback(const String &topic, JsonDocument &payload);
+
     IdentityEventCallback callback;
     IdentityShadowThingSignalCallback signalCallback;
     IdentityJobCallback jobCallback;
     IdentityCommandCallback commandCallback;
+    IdentityMessageCallback messageCallback;
 
     int connectionState;
     unsigned long startAttemptTime;
@@ -83,6 +87,10 @@ public:
     void setCommandCallback(IdentityCommandCallback callback);
 
     void setJobCallback(IdentityJobCallback callback);
+
+    void setMessageCallback(IdentityMessageCallback callback);
+
+    void publish(const String &topic, JsonDocument& payload);
 
     PubSubClient *getClient();
 

@@ -64,6 +64,9 @@ void IdentityShadowThing::begin() {
         thingClient->setShadowCallback([this](const String &shadowName, JsonObject &payload, bool shouldMutate) -> bool {
             return thingShadowCallback(shadowName, payload, shouldMutate);
         });
+        thingClient->setMessageCallback([this](const String &topic, JsonDocument &payload) -> bool {
+            return thingMessageCallback(topic, payload);
+        });
 
         String payload = preferences.getString(SHADOW_IDENTITY_KEY, "{}");
 
@@ -377,6 +380,12 @@ bool IdentityShadowThing::thingShadowCallback(const String &shadowName, JsonObje
     return false;
 }
 
+bool IdentityShadowThing::thingMessageCallback(const String &topic, JsonDocument &payload) {
+    if (this->messageCallback != nullptr) {
+        this->messageCallback(topic, payload);
+    }
+}
+
 void IdentityShadowThing::setEventCallback(IdentityEventCallback callback) {
     this->callback = callback;
 }
@@ -391,6 +400,17 @@ void IdentityShadowThing::setJobCallback(IdentityJobCallback callback) {
 
 void IdentityShadowThing::setCommandCallback(IdentityCommandCallback callback) {
     this->commandCallback = callback;
+}
+
+void IdentityShadowThing::setMessageCallback(IdentityMessageCallback callback) {
+    this->messageCallback = callback;
+}
+
+void IdentityShadowThing::publish(const String &topic, JsonDocument &payload) {
+    String stringPayload;
+    serializeJson(payload, stringPayload);
+
+    this->mqttClient.publish(topic.c_str(), stringPayload.c_str());
 }
 
 PubSubClient *IdentityShadowThing::getClient() {
