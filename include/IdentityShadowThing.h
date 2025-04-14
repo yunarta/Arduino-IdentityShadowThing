@@ -92,6 +92,8 @@ public:
 
     String createTopic(const String &subTopic);
 
+    String parseTopic(const String &topic);
+
     void subscribe(const String &subTopic);
 
     void publish(const String &topic, JsonDocument &payload);

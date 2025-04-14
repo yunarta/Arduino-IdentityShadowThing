@@ -417,6 +417,16 @@ String IdentityShadowThing::createTopic(const String &subTopic) {
     return topic;
 }
 
+String IdentityShadowThing::parseTopic(const String &topic) {
+    char commandPrefix[1024];
+
+    snprintf(commandPrefix, sizeof(commandPrefix), "dev/%s/", this->thingName.c_str());
+    size_t nameOffset = strlen(commandPrefix);
+
+    String subTopic = topic.substring(nameOffset, topic.length() - 13);
+    return subTopic;
+}
+
 void IdentityShadowThing::publish(const String &topic, JsonDocument &payload) {
     String stringPayload;
     serializeJson(payload, stringPayload);
