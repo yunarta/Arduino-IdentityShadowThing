@@ -429,7 +429,7 @@ String IdentityShadowThing::parseTopic(const String &topic) {
     snprintf(commandPrefix, sizeof(commandPrefix), "dev/%s/", this->thingName.c_str());
     size_t nameOffset = strlen(commandPrefix);
 
-    String subTopic = topic.substring(nameOffset, topic.length() - 13);
+    String subTopic = topic.substring(nameOffset, topic.length());
     return subTopic;
 }
 
