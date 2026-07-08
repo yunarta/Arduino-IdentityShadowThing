@@ -34,8 +34,8 @@ void IdentityShadowThingTask::task() {
     }
 }
 
-IdentityShadowThingTask::IdentityShadowThingTask(IdentityShadowThing *shadowThing) {
-    this->shadowThing = shadowThing;
+IdentityShadowThingTask::IdentityShadowThingTask(IdentityShadowThing *shadowThing): shadowThing(shadowThing),
+                                                                       thingLifecycleHandle(nullptr) {
 }
 
 void IdentityShadowThingTask::begin() {

@@ -27,10 +27,17 @@ IdentityShadowThing::IdentityShadowThing(const char *awsEndPoint,
                                                                         provisioningName(provisioningName),
                                                                         awsEndPoint(awsEndPoint),
                                                                         mqttClient(securedClient),
-                                                                        eventCallback(
-                                                                            nullptr
-                                                                        ) {
-    provisioned = false;
+                                                                        provisioningClient(nullptr),
+                                                                        thingClient(nullptr),
+                                                                        eventCallback(nullptr),
+                                                                        signalCallback(nullptr),
+                                                                        jobCallback(nullptr),
+                                                                        commandCallback(nullptr),
+                                                                        messageCallback(nullptr),
+                                                                        connectionState(CONNECTING),
+                                                                        startAttemptTime(0),
+                                                                        provisioned(false),
+                                                                        identified(false) {
 #ifdef LOG_INFO
     Serial.println(F("[INFO] IdentityShadowThing initialized"));
     Serial.printf("[INFO] awsEndPoint: %s\n", awsEndPoint);
